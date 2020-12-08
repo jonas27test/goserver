@@ -26,10 +26,10 @@ func main() {
 	if *metrics {
 		metricsServer()
 	}
-	unencryptedServer(*port, *staticDir)
+	serve(*port, *staticDir)
 }
 
-func unencryptedServer(port string, staticDir string) {
+func serve(port string, staticDir string) {
 	fs := http.FileServer(http.Dir(staticDir))
 	http.Handle("/", handleMiddleware(fs))
 	err := http.ListenAndServe(port, nil)
@@ -40,14 +40,9 @@ func unencryptedServer(port string, staticDir string) {
 
 func handleMiddleware(fs http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		HttpRequestTotalIncrease(1)
+		httpRequestsTotal.Add(1)
 		http.StripPrefix("/", fs).ServeHTTP(w, r)
 	})
-}
-
-func HttpRequestTotalIncrease(i float64) {
-	httpRequestsTotal.Add(i)
-	log.Println("add 1")
 }
 
 func metricsServer() {
