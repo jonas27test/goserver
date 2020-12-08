@@ -9,5 +9,6 @@ RUN chown -R scratchuser:scratchuser /cert && chown -R scratchuser:scratchuser /
 
 FROM alpine
 COPY --from=builder /goserver /
+COPY --from=builder /etc/passwd /etc/passwd
 USER scratchuser
 CMD ["/goserver"]
