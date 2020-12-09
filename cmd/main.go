@@ -23,6 +23,7 @@ var (
 func main() {
 	flag.Parse()
 	log.SetFlags(log.Lshortfile)
+	log.Println("starting server on port: " + *port)
 	if *metrics {
 		metricsServer()
 	}
