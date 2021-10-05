@@ -1,9 +1,12 @@
 package main
 
 import (
+	"compress/gzip"
 	"flag"
+	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -39,10 +42,27 @@ func serve(port string, staticDir string) {
 	}
 }
 
+type gzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+}
+
+// Use the Writer part of gzipResponseWriter to write the output.
+
+func (w gzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
 func handleMiddleware(fs http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		httpRequestsTotal.Add(1)
-		http.StripPrefix("/", fs).ServeHTTP(w, r)
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			httpRequestsTotal.Add(1)
+			http.StripPrefix("/", fs).ServeHTTP(w, r)
+		}
+		w.Header().Set("Content-Encoding", "gzip")
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+		http.StripPrefix("/", fs).ServeHTTP(gzipResponseWriter{gz, w}, r)
 	})
 }
 

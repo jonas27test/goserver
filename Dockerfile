@@ -1,4 +1,4 @@
-FROM golang as builder
+FROM golang:1.16 as builder
 COPY go.mod go.sum cmd/main.go ./
 RUN export GOPATH="" && \
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o /goserver .
