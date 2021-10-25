@@ -1,4 +1,4 @@
-module goserver
+module github.com/jonas27test/goserver
 
 go 1.16
 
