@@ -8,14 +8,20 @@ import (
 	"net/http"
 	"strings"
 
+	"embed"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+// content holds our static web server content.
+//
+//go:embed static/*
+var static embed.FS
+
 var (
-	port      = flag.String("port", ":8080", "The port")
-	staticDir = flag.String("staticDir", "./static", "The root dir of the static content.")
-	metrics   = flag.Bool("metrics", true, "Enable Prometheus metrics.")
+	port    = flag.String("port", ":8080", "The port")
+	metrics = flag.Bool("metrics", true, "Enable Prometheus metrics.")
 
 	httpRequestsTotal = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "http_requests_total",
@@ -30,11 +36,11 @@ func main() {
 	if *metrics {
 		metricsServer()
 	}
-	serve(*port, *staticDir)
+	serve(*port)
 }
 
-func serve(port string, staticDir string) {
-	fs := http.FileServer(http.Dir(staticDir))
+func serve(port string) {
+	fs := http.FileServer(http.FS(static))
 	http.Handle("/", handleMiddleware(fs))
 	err := http.ListenAndServe(port, nil)
 	if err != nil {
